@@ -1,7 +1,7 @@
 <?php
 
 $CFG = new stdClass();
-$CFG->dirroot = 'C:\dev\temp\moodle-split-old\moodle-split-plumbing\repos\moodle-working';
+$CFG->dirroot = 'F:\htdocs\minimoodle';
 $CFG->dataroot = sys_get_temp_dir();
 $CFG->wwwroot = 'http://example.com';
 $CFG->debug = E_ALL;
@@ -58,8 +58,8 @@ class Minimoodle {
                 // format uses get_config() which we don't want to fake
                 if ($plugintype == 'format') {
                     $can_uninstall = $pluginname != self::$courseformat;
-                } else if ($plugintype == 'theme') {
-                    $can_uninstall = $pluginname != self::$theme;
+                } else if ($plugintype == 'theme' && $pluginname == self::$theme) {
+                    $can_uninstall = false;
                 } else {
                     $can_uninstall = $pluginfo->is_uninstall_allowed();
                 }
