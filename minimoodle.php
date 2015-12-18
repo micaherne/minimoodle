@@ -7,6 +7,8 @@ $CFG->wwwroot = 'http://example.com';
 $CFG->debug = E_ALL;
 $CFG->debugdisplay = 1;
 
+$CFG->theme = 'clean'; // We MUST keep a default theme
+
 define('CLI_SCRIPT', true);
 define('ABORT_AFTER_CONFIG', true); // We need just the values from config.php.
 define('CACHE_DISABLE_ALL', true); // This prevents reading of existing caches.
@@ -29,7 +31,7 @@ $DB = new fakedb();
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Filesystem\Filesystem;
 
-Minimoodle::removePlugins();
+Minimoodle::init();
 
 class Minimoodle {
 
@@ -37,9 +39,6 @@ class Minimoodle {
 
     // We need at least one course format, but can decide which
     public static $courseformat = 'topics';
-
-    // Likewise theme
-    public static $theme = 'clean';
 
     public static function init() {
         global $CFG;
@@ -58,8 +57,6 @@ class Minimoodle {
                 // format uses get_config() which we don't want to fake
                 if ($plugintype == 'format') {
                     $can_uninstall = $pluginname != self::$courseformat;
-                } else if ($plugintype == 'theme' && $pluginname == self::$theme) {
-                    $can_uninstall = false;
                 } else {
                     $can_uninstall = $pluginfo->is_uninstall_allowed();
                 }
