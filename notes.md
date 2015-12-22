@@ -10,4 +10,20 @@ Setting defaultblocks_override to an empty string doesn't appear to work.
 
 Checked the code and this is using empty(), so needs a space in it if you don't want any blocks. Maybe worth reporting on the Tracker? This might be one of the places it would be more appropriate to use isset()
 
+Also, on first install, blocks_add_default_system_blocks() is called, which, in addition to adding the settings and navigation blocks, also attempts to add: admin_bookmarks, private_files, online_users, badges, calendar_month, calendar_upcoming, course_overview
+
 ---
+
+Some plugin types prevent uninstallation entirely:
+
+* gradingform
+* cachestore
+* webservice
+
+This seems a bit odd and it might be worth investigating and put an improvement into the Tracker to make it more specific.
+
+---
+
+The unit test suite can't be run as the database setup installs all the default course and site blocks, and this can't be overridden from the config.php file (as unit testing appears only to pick up certain specific values from this).
+
+Also, many tests rely on optional plugin code (which is fair enough as they're designed to be run over the full codebase, not a subset), so even if we could manage to install the testing databases successfully, the unit tests would still fail in many places.

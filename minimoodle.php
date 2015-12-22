@@ -31,7 +31,7 @@ $DB = new fakedb();
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Filesystem\Filesystem;
 
-Minimoodle::init();
+Minimoodle::removePlugins();
 
 class Minimoodle {
 
