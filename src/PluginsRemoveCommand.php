@@ -8,7 +8,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Minimoodle\Moodle\FakeDb;
-use Minimoodle\Moodle\FakeStringManager;
 use Symfony\Component\Console\Input\InputOption;
 
 class PluginsRemoveCommand extends Command {
@@ -30,6 +29,14 @@ class PluginsRemoveCommand extends Command {
         'mod_assign', // course\tests\courselib_test.php
         'mod_assignment', // mod\assign\tests\upgradelib_test.php
         'profilefield_datetime', // user\profile\index_field_form.php
+    ];
+
+    // Plugins needed to make unit tests pass
+    protected static $requiredforphpunitpass = [
+    	'block_search_forums', // course format default
+    	'block_news_items', // course format default
+    	'block_calendar_upcoming', // course format default
+		'block_recent_activity', // course format default
     ];
 
     public function configure() {
@@ -67,7 +74,7 @@ class PluginsRemoveCommand extends Command {
         $fs = new Filesystem();
 
         if ($input->getOption('testable')) {
-            foreach (array_merge(self::$requiredforphpunitinit, self::$requiredforphpunitrun) as $component) {
+            foreach (array_merge(self::$requiredforphpunitinit, self::$requiredforphpunitrun, self::$requiredforphpunitpass) as $component) {
                 $plugins[$component]['can_uninstall'] = false;
             }
         }
