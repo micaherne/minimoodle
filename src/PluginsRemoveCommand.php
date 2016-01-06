@@ -6,13 +6,14 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Filesystem;
 use Minimoodle\Moodle\FakeDb;
 use Minimoodle\Moodle\FakeStringManager;
 
-class RemoveCommand extends Command {
+class PluginsRemoveCommand extends Command {
 
     public function configure() {
-        $this->setName('remove')
+        $this->setName('plugins:remove')
             ->setDescription('Remove non-essential plugins')
             ->addArgument('moodledir', InputArgument::OPTIONAL, 'The path to your Moodle codebase');
     }
@@ -34,18 +35,25 @@ class RemoveCommand extends Command {
             return;
         }
 
-        $this->setUpGlobals($moodledir);
+        self::setUpGlobals($moodledir);
 
         // TODO: Make the choice of theme an input parameter
         $CFG->theme = 'clean'; // We MUST keep a default theme
 
         // TODO: getPluginMetadata defaults to topics format - make a parameter
-        $meta = $this->getPluginMetadata();
+        $plugins = self::getPluginMetadata();
 
-        var_dump($meta);
+        $fs = new Filesystem();
+
+        foreach ($plugins as $plugin => $meta) {
+            if ($meta['can_uninstall']) {
+                echo "Removing $plugin\n";
+                $fs->remove($CFG->dirroot . $meta['dir']);
+            }
+        }
     }
 
-    protected function setUpGlobals($moodledir) {
+    public static function setUpGlobals($moodledir) {
         global $CFG, $DB;
 
         $CFG = new \stdClass();
@@ -74,7 +82,7 @@ class RemoveCommand extends Command {
 
     }
 
-    protected function getPluginMetadata($courseformat = 'topics') {
+    public static function getPluginMetadata($courseformat = 'topics') {
         global $CFG;
 
         $pluginmanager = \core_plugin_manager::instance();

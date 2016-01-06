@@ -11,7 +11,8 @@ class Application extends SymfonyApplication {
 
     public function __construct() {
         parent::__construct('minimoodle');
-        $this->add(new RemoveCommand());
+        $this->add(new PluginsRemoveCommand());
+        $this->add(new PluginsDumpCommand());
     }
 
 }

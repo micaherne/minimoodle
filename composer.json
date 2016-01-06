@@ -3,7 +3,8 @@
     "description": "Scripts for creating minimal Moodle versions",
     "require": {
         "symfony/yaml": "^3.0",
-        "symfony/filesystem": "^3.0"
+        "symfony/filesystem": "^3.0",
+        "symfony/console": "^3.0"
     },
     "license": "GPL-3.0",
     "authors": [
@@ -11,5 +12,10 @@
             "name": "Michael Aherne",
             "email": "micaherne@blueyonder.co.uk"
         }
-    ]
+    ],
+    "autoload": {
+        "psr-4": {
+            "Minimoodle\\": "src//"
+        }
+    }
 }
