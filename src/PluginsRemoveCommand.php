@@ -9,13 +9,34 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Minimoodle\Moodle\FakeDb;
 use Minimoodle\Moodle\FakeStringManager;
+use Symfony\Component\Console\Input\InputOption;
 
 class PluginsRemoveCommand extends Command {
+
+    // Plugins needed for initialising unit tests
+    protected static $requiredforphpunitinit = ['tool_phpunit', 'block_admin_bookmarks', 'block_private_files',
+        'block_online_users', 'block_badges', 'block_calendar_month', 'block_calendar_upcoming', 'block_course_overview',
+        'block_site_main_menu', 'block_course_summary'
+    ];
+
+    // Plugins needed for unit test includes
+    protected static $requiredforphpunitrun = [
+        'mod_quiz', // lib\tests\questionlib_test.php
+        'gradereport_grader', // grade\tests\report_graderlib_test.php,
+        'gradereport_user', // grade\tests\reportuserlib_test.php
+        'enrol_imsenterprise', // course\tests\courselib_test.php,
+        'mod_wiki', // tag\tests\events_test.php,
+        'qbehaviour_deferredfeedback', // question\type\missingtype\tests\missingtype_test.php
+        'mod_assign', // course\tests\courselib_test.php
+        'mod_assignment', // mod\assign\tests\upgradelib_test.php
+        'profilefield_datetime', // user\profile\index_field_form.php
+    ];
 
     public function configure() {
         $this->setName('plugins:remove')
             ->setDescription('Remove non-essential plugins')
-            ->addArgument('moodledir', InputArgument::OPTIONAL, 'The path to your Moodle codebase');
+            ->addArgument('moodledir', InputArgument::OPTIONAL, 'The path to your Moodle codebase')
+            ->addOption('testable', null, InputOption::VALUE_NONE, 'Adds the minimum plugins required to run unit tests (there is no guarantee the tests will pass!)');
     }
 
     public function execute(InputInterface $input, OutputInterface $output) {
@@ -44,6 +65,12 @@ class PluginsRemoveCommand extends Command {
         $plugins = self::getPluginMetadata();
 
         $fs = new Filesystem();
+
+        if ($input->getOption('testable')) {
+            foreach (array_merge(self::$requiredforphpunitinit, self::$requiredforphpunitrun) as $component) {
+                $plugins[$component]['can_uninstall'] = false;
+            }
+        }
 
         foreach ($plugins as $plugin => $meta) {
             if ($meta['can_uninstall']) {
