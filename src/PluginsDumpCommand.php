@@ -20,7 +20,7 @@ class PluginsDumpCommand extends Command {
     public function execute(InputInterface $input, OutputInterface $output) {
         global $CFG;
 
-        // TODO: Copied from RemoveCommand - refactor
+        // TODO: Copied from PluginsRemoveCommand - refactor
         $moodledir = $input->getArgument('moodledir');
 
         if (is_null($moodledir)) {
@@ -35,11 +35,11 @@ class PluginsDumpCommand extends Command {
             return;
         }
 
-        RemoveCommand::setUpGlobals($moodledir);
+        PluginsRemoveCommand::setUpGlobals($moodledir);
 
         $outputfile = $input->getArgument('outputfile');
 
-        $plugins = RemoveCommand::getPluginMetadata();
+        $plugins = PluginsRemoveCommand::getPluginMetadata();
         file_put_contents($outputfile, Yaml::dump($plugins));
 
         $output->writeln("Plugin data dumped to " . realpath($outputfile));

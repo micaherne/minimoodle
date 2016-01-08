@@ -43,13 +43,19 @@ class PluginsRemoveCommand extends Command {
         $this->setName('plugins:remove')
             ->setDescription('Remove non-essential plugins')
             ->addArgument('moodledir', InputArgument::OPTIONAL, 'The path to your Moodle codebase')
-            ->addOption('testable', null, InputOption::VALUE_NONE, 'Adds the minimum plugins required to run unit tests (there is no guarantee the tests will pass!)');
+            ->addOption('testable', null, InputOption::VALUE_NONE, 'Adds the minimum plugins required to run unit tests (there is no guarantee the tests will pass!)')
+            ->addOption('format', null, InputOption::VALUE_OPTIONAL, 'Which course format to use', 'weeks')
+            ->addOption('theme', null, InputOption::VALUE_OPTIONAL, 'Which theme format to use', 'clean')
+            ->addOption('dry-run', null, InputOption::VALUE_NONE);
     }
 
     public function execute(InputInterface $input, OutputInterface $output) {
         global $CFG;
 
         $moodledir = $input->getArgument('moodledir');
+        $theme = $input->getOption('theme');
+        $format = $input->getOption('format');
+        $dryrun = $input->getOption('dry-run');
 
         if (is_null($moodledir)) {
             // TODO: Check some default codebase location
@@ -65,24 +71,41 @@ class PluginsRemoveCommand extends Command {
 
         self::setUpGlobals($moodledir);
 
-        // TODO: Make the choice of theme an input parameter
-        $CFG->theme = 'clean'; // We MUST keep a default theme
+        if (!file_exists("$moodledir/theme/$theme")) {
+            $output->writeln("Invalid theme $theme");
+            return;
+        }
 
-        // TODO: getPluginMetadata defaults to topics format - make a parameter
-        $plugins = self::getPluginMetadata();
+        if (!file_exists("$moodledir/course/format/$format")) {
+            $output->writeln("Invalid format $format");
+            return;
+        }
+
+        $CFG->theme = $theme; // We MUST keep a default theme
+
+        $plugins = self::getPluginMetadata($format);
+
+        self::preventUninstall('theme_' . $theme, $plugins);
+        self::preventUninstall('format_' . $format, $plugins);
 
         $fs = new Filesystem();
 
         if ($input->getOption('testable')) {
             foreach (array_merge(self::$requiredforphpunitinit, self::$requiredforphpunitrun, self::$requiredforphpunitpass) as $component) {
-                $plugins[$component]['can_uninstall'] = false;
+                self::preventUninstall($component, $plugins);
             }
+        }
+
+        if ($dryrun) {
+            echo "Dry running removal process\n";
         }
 
         foreach ($plugins as $plugin => $meta) {
             if ($meta['can_uninstall']) {
                 echo "Removing $plugin\n";
-                $fs->remove($CFG->dirroot . $meta['dir']);
+                if (!$dryrun) {
+                    $fs->remove($CFG->dirroot . $meta['dir']);
+                }
             }
         }
     }
@@ -116,7 +139,7 @@ class PluginsRemoveCommand extends Command {
 
     }
 
-    public static function getPluginMetadata($courseformat = 'topics') {
+    public static function getPluginMetadata($courseformat = 'weeks') {
         global $CFG;
 
         $pluginmanager = \core_plugin_manager::instance();
@@ -135,11 +158,46 @@ class PluginsRemoveCommand extends Command {
                 } else {
                     $can_uninstall = $pluginfo->is_uninstall_allowed();
                 }
-                $meta[$component] = ['type' => $plugintype, 'dir' => str_replace($CFG->dirroot, '', $plugindir), 'can_uninstall' => $can_uninstall];
+                $meta[$component] = ['type' => $plugintype, 'dir' => str_replace($CFG->dirroot, '', $plugindir), 'can_uninstall' => $can_uninstall,
+                    'versioninfo' => (array) self::getVersionInfo($plugindir)
+                ];
             }
         }
 
         return $meta;
+    }
+
+    public static function getVersionInfo($plugindir) {
+
+        $plugin = new \stdClass();
+
+        if (!is_readable($plugindir.'/version.php')) {
+            return $plugin;
+        }
+
+        $plugin->version = null;
+        $module = $plugin; // Prevent some notices when plugin placed in wrong directory.
+        require($plugindir.'/version.php');  // defines $plugin with version etc
+
+        return $plugin;
+    }
+
+    /**
+     * Prevent uninstall, taking dependencies into account.
+     *
+     * @param unknown $component
+     * @param unknown $pluginMetadata
+     */
+    public static function preventUninstall($component, &$pluginMetadata) {
+        $pluginMetadata[$component]['can_uninstall'] = false;
+        $versioninfo = $pluginMetadata[$component]['versioninfo'];
+        if (isset($versioninfo['dependencies'])) {
+            foreach ($versioninfo['dependencies'] as $dependency => $version) {
+                if ($pluginMetadata[$dependency]['can_uninstall']) {
+                    self::preventUninstall($dependency, $pluginMetadata);
+                }
+            }
+        }
     }
 
 }
