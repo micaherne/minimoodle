@@ -12,33 +12,6 @@ use Symfony\Component\Console\Input\InputOption;
 
 class PluginsRemoveCommand extends Command {
 
-    // Plugins needed for initialising unit tests
-    protected static $requiredforphpunitinit = ['tool_phpunit', 'block_admin_bookmarks', 'block_private_files',
-        'block_online_users', 'block_badges', 'block_calendar_month', 'block_calendar_upcoming', 'block_course_overview',
-        'block_site_main_menu', 'block_course_summary'
-    ];
-
-    // Plugins needed for unit test includes
-    protected static $requiredforphpunitrun = [
-        'mod_quiz', // lib\tests\questionlib_test.php
-        'gradereport_grader', // grade\tests\report_graderlib_test.php,
-        'gradereport_user', // grade\tests\reportuserlib_test.php
-        'enrol_imsenterprise', // course\tests\courselib_test.php,
-        'mod_wiki', // tag\tests\events_test.php,
-        'qbehaviour_deferredfeedback', // question\type\missingtype\tests\missingtype_test.php
-        'mod_assign', // course\tests\courselib_test.php
-        'mod_assignment', // mod\assign\tests\upgradelib_test.php
-        'profilefield_datetime', // user\profile\index_field_form.php
-    ];
-
-    // Plugins needed to make unit tests pass
-    protected static $requiredforphpunitpass = [
-    	'block_search_forums', // course format default
-    	'block_news_items', // course format default
-    	'block_calendar_upcoming', // course format default
-		'block_recent_activity', // course format default
-    ];
-
     public function configure() {
         $this->setName('plugins:remove')
             ->setDescription('Remove non-essential plugins')
@@ -57,6 +30,10 @@ class PluginsRemoveCommand extends Command {
         $format = $input->getOption('format');
         $dryrun = $input->getOption('dry-run');
 
+        // Do we add default blocks etc to enable the package to be installed?
+        // TODO: Make an option to switch off
+        $installable = true;
+
         if (is_null($moodledir)) {
             // TODO: Check some default codebase location
             $output->writeln("No moodle codebase found");
@@ -68,6 +45,10 @@ class PluginsRemoveCommand extends Command {
             $output->writeln("Can't find version.php - not a Moodle codebase");
             return;
         }
+
+        // Read static data about plugins
+        $yaml = file_get_contents(__DIR__ . '/../resource/plugins.yml');
+        $staticplugindata = \Symfony\Component\Yaml\Yaml::parse($yaml);
 
         self::setUpGlobals($moodledir);
 
@@ -91,8 +72,17 @@ class PluginsRemoveCommand extends Command {
         $fs = new Filesystem();
 
         if ($input->getOption('testable')) {
-            foreach (array_merge(self::$requiredforphpunitinit, self::$requiredforphpunitrun, self::$requiredforphpunitpass) as $component) {
-                self::preventUninstall($component, $plugins);
+            foreach(['required_for_phpunit_init', 'required_for_phpunit_run', 'required_for_phpunit_pass'] as $type) {
+                foreach ($staticplugindata[$type] as $component) {
+                    self::preventUninstall($component, $plugins);
+                }
+            }
+
+        }
+
+        if ($installable) {
+            foreach ($staticplugindata['default_system_blocks'] as $blockname) {
+                self::preventUninstall('block_' . $blockname, $plugins);
             }
         }
 

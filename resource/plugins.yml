@@ -1,0 +1,47 @@
+# Data about plugins that cant be extracted using core_component.
+#
+# The phpunit related ones are from when I was trying to get the unit
+# tests to work on the minimal install, but this proved impossible.
+
+default_system_blocks: # from blocks_add_default_system_blocks in blocklib.php
+    - navigation
+    - settings
+    - admin_bookmarks
+    - private_files
+    - online_users
+    - badges
+    - calendar_month
+    - calendar_upcoming
+    - lp
+    - course_overview
+required_for_phpunit_init: # ones that crashed out the init script
+    - tool_phpunit
+    - block_admin_bookmarks
+    - block_private_files
+    - block_online_users
+    - block_badges
+    - block_calendar_month
+    - block_calendar_upcoming
+    - block_course_overview
+    - block_site_main_menu
+    - block_course_summary
+required_for_phpunit_run: # ones that crashed out the phpunit run
+    - mod_quiz # lib\tests\questionlib_test.php
+    - gradereport_grader # grade\tests\report_graderlib_test.php,
+    - gradereport_user # grade\tests\reportuserlib_test.php
+    - enrol_imsenterprise # course\tests\courselib_test.php,
+    - mod_wiki # tag\tests\events_test.php,
+    - qbehaviour_deferredfeedback # question\type\missingtype\tests\missingtype_test.php
+    - mod_assign # course\tests\courselib_test.php
+    - mod_assignment # mod\assign\tests\upgradelib_test.php
+    - profilefield_datetime # user\profile\index_field_form.php
+    - profilefield_textarea #  core_badges_badgeslib_testcase->test_badges_observer_course_criteria_review()
+    - profilefield_text 
+    - format_topics
+required_for_phpunit_pass:
+    - block_search_forums # course format default
+    - block_news_items # course format default
+    - block_calendar_upcoming # course format default
+    - block_recent_activity # course format default
+    - report_completion # completion_can_view_data()
+    - tool_log # core_coursecatlib_testcase->test_delete()
