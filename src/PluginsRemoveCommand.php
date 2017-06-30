@@ -91,6 +91,12 @@ class PluginsRemoveCommand extends Command {
         }
 
         foreach ($plugins as $plugin => $meta) {
+            // Temp
+            if (in_array($meta['type'], ['mod', 'block'])) {
+                echo "Ignoring $plugin\n";
+                continue;
+            }
+
             if ($meta['can_uninstall']) {
                 echo "Removing $plugin\n";
                 if (!$dryrun) {

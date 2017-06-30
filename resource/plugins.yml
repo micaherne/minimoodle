@@ -38,7 +38,10 @@ required_for_phpunit_run: # ones that crashed out the phpunit run
     - profilefield_datetime # user\profile\index_field_form.php
     - profilefield_textarea #  core_badges_badgeslib_testcase->test_badges_observer_course_criteria_review()
     - profilefield_text 
+    - mod_data # core_files_externallib_testcase::test_get_files
+    - datafield_file # core_files_externallib_testcase::test_get_files
     - format_topics
+    - enrol_self # core_enrollib_testcase::test_enrol_get_shared_courses_different_methods()
 required_for_phpunit_pass:
     - block_search_forums # course format default
     - block_news_items # course format default
